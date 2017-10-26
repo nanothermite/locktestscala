@@ -2,6 +2,7 @@ import lock.LockImpl
 import org.scalatest.FlatSpec
 
 import scalaz.Scalaz._
+import scalaz.concurrent.Task
 
 class LockTest extends FlatSpec {
 
@@ -9,9 +10,17 @@ class LockTest extends FlatSpec {
   val finalNum = 100000
   val lock = new LockImpl()
 
+  /**
+    * side effect on mutable
+    */
   def critical(): Unit = counter = counter + 1
 
-  def threadProto(flag: Boolean) = new Thread(() => {
+  /**
+    * build a task with/w/o locking
+    * @param flag locking switch
+    * @return
+    */
+  def taskProto(flag: Boolean): Task[Unit] = Task {
     if (flag) {
       lock.lock()
       critical()
@@ -19,19 +28,26 @@ class LockTest extends FlatSpec {
     } else {
       critical()
     }
-  })
+  }
 
-  def ThreadRun(flag: Boolean): Unit = (1 |-> finalNum).foreach(x => threadProto(flag).start() )
+  /**
+    * compile a collection of tasks
+    * @param flag locking switch
+    * @return
+    */
+  def TaskBuild(flag: Boolean): List[Task[Unit]] = (1 |-> finalNum).map { x => taskProto(flag) }
 
-  "A Safe Lock" should "yield full count output" in {
-    ThreadRun(true)
+  "A Lock" should "yield full count summation" in {
+    val tasks = TaskBuild(true)
+    Task.gatherUnordered(tasks).unsafePerformSync
     println(s"true final $counter")
     assert(counter == finalNum)
   }
 
-  "An Unsafe Locks" should "not yield same count output" in {
+  "Absence of Lock" should "yield count collisions" in {
     counter = 0
-    ThreadRun(false)
+    val tasks = TaskBuild(false)
+    Task.gatherUnordered(tasks).unsafePerformSync
     println(s"false final $counter")
     assert(counter != finalNum)
   }
