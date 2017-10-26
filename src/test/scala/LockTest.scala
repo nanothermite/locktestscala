@@ -7,33 +7,21 @@ class LockTest extends FlatSpec {
 
   var counter = 0
   val finalNum = 100000
-
-  /**
-    * feed input value to test lock
-    * @return
-    */
-  def critical(`type`: String): Unit = {
-    //val tid = currentThread().getId()
-    //println(s"thread${`type`} $tid saw $counter")
-    counter = counter + 1
-  }
-
   val lock = new LockImpl()
+
+  def critical(): Unit = counter = counter + 1
 
   def threadProto(flag: Boolean) = new Thread(() => {
     if (flag) {
       lock.lock()
-      critical(s"$flag")
+      critical()
       lock.unlock()
     } else {
-      critical(s"$flag")
+      critical()
     }
   })
 
-  def ThreadRun(flag: Boolean): Unit =
-    (1 |-> finalNum).map ( x =>
-      threadProto(flag).start
-    )
+  def ThreadRun(flag: Boolean): Unit = (1 |-> finalNum).foreach(x => threadProto(flag).start() )
 
   "A Safe Lock" should "yield full count output" in {
     ThreadRun(true)
