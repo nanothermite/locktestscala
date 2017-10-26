@@ -1,7 +1,6 @@
 import lock.LockImpl
 import org.scalatest.FlatSpec
 
-import scalaz.Scalaz._
 import scalaz.concurrent.Task
 
 class LockTest extends FlatSpec {
@@ -35,7 +34,7 @@ class LockTest extends FlatSpec {
     * @param flag locking switch
     * @return
     */
-  def TaskBuild(flag: Boolean): List[Task[Unit]] = (1 |-> finalNum).map { x => taskProto(flag) }
+  def TaskBuild(flag: Boolean): List[Task[Unit]] = List.fill(finalNum){ taskProto(flag)}
 
   "A Lock" should "yield full count summation" in {
     val tasks = TaskBuild(true)
