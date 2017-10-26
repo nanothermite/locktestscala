@@ -2,6 +2,7 @@ An implementation of a Lock (more of a semaphore) using java.util.concurrent cla
 from java.util.concurrent.lock in scala.
 
 Usage:
+
 % sbt test
 
 [info] Loading global plugins from /home/hkatz/.sbt/0.13/plugins
