@@ -5,27 +5,33 @@ import scalaz.concurrent.Task
 
 class LockTest extends FlatSpec {
 
+  @volatile
   var counter = 0
   val finalNum = 100000
   val lock = new LockImpl()
-
-  /**
-    * side effect on mutable
-    */
-  def critical(): Unit = counter = counter + 1
 
   /**
     * build a task with/w/o locking
     * @param flag locking switch
     * @return
     */
-  def taskProto(flag: Boolean): Task[Unit] = Task {
-    if (flag) {
-      lock.lock()
-      critical()
-      lock.unlock()
-    } else {
-      critical()
+  def taskProto(flag: Boolean): Task[Unit] = {
+    /**
+      * side effect on mutable
+      */
+    def critical(): Unit = counter = counter + 1
+
+    Task {
+      if (flag) {
+        lock.lock()
+        try {
+          critical()
+        } finally {
+          lock.unlock()
+        }
+      } else {
+        critical()
+      }
     }
   }
 
